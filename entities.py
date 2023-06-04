@@ -32,10 +32,18 @@ class Entity(pygame.sprite.Sprite):
             self.setSequenceCount(0)
         else:
             self.setSequenceCount(seqCount + 1)
-        self.image = self.sequences[self.getSequence()][self.getDirection()][self.getSequenceCount()]
 
     def isCollinding(self, targetRect: pygame.Rect):
-        return self.rect.colliderect(targetRect)
+        if abs(self.pos[0] - targetRect.right) < 3:
+            return True, "left"
+        elif abs(self.pos[0] + self.size[0] - targetRect.left) < 3:
+            return True, "right"
+        elif abs(self.pos[1] - targetRect.bottom) < 3:
+            return True, "top"
+        elif abs(self.pos[1] + self.size[1] - targetRect.top) < 3:
+            return True, "bottom"
+    
+        return False, ""
 
     # [Accessors]
     # [Getters]
@@ -55,7 +63,7 @@ class Entity(pygame.sprite.Sprite):
     def getSequence(self):
         return self.sequence
     
-    def getSequenceInfos(self): 
+    def getSequenceInfos(self):
         return self.sequenceInfos
     
     def getSequenceCount(self):
@@ -74,20 +82,33 @@ class Entity(pygame.sprite.Sprite):
         return self.airVelocity
 
     def getImage(self):
-        return self.image
+        return self.sequences[self.getSequence()][self.getDirection()][self.getSequenceCount()]
     
     def getGravity(self):
         return self.gravity
     
     def getActiveChunck(self):
-        x, y = int(self.pos[0]//const["SCREEN_SIZE"][0]), int(self.pos[1]//const["SCREEN_SIZE"][1])
+        x, y = int(self.rect.x//const["SCREEN_SIZE"][0]), int(self.rect.y//const["SCREEN_SIZE"][1])
         return self.game.chuncks[f"{x}:{y}"]
 
-    def getCollisions(self):
-        return pygame.sprite.spritecollide(self, self.getActiveChunck().getTiles(), False, pygame.sprite.collide_mask)
 
-    def getNearestsTiles(self):
-        tiles = []
+    def getCollisions(self):
+        collisions = {}
+        for tile in self.getActiveChunck().getTiles():
+            if not self.rect.colliderect(tile["rect"]): continue
+            colBottom = False
+            if abs(tile["rect"].top - self.rect.bottom) < 15:
+                collisions["bottom"] = True
+                colBottom = True
+            elif abs(tile["rect"].bottom - self.rect.top) < 15:
+                collisions["top"] = True
+
+            if abs(tile["rect"].left - self.rect.right) < 15 and not colBottom:
+                collisions["right"] = True 
+            if abs(tile["rect"].right - self.rect.left) < 15 and not colBottom:
+                collisions["left"] = True
+
+        return collisions
 
     # [Setters]
     def setPos(self, x, y):
@@ -142,11 +163,11 @@ class Player(Entity):
         self.setAirVelocity(12)
         self.setSize(100, 70)
         self.setPos(0, 0)
-        self.image = self.sequences[self.getSequence()][self.getDirection()][0]
-        self.rect = self.image.get_rect()
+        self.rect = self.getImage().get_rect()
 
     def draw(self, screen):
-        self.game.draw(screen, self.getImage(), self.getPos(), self.getSize())
+        self.game.draw(screen, self.getImage(), (self.rect.x, self.rect.y), (self.rect.w, self.rect.h))
+        self.game.drawRect(screen, (255, 0, 0), (self.rect.x, self.rect.y), (self.getHealth()*0.8, 5))
 
     def attack(self):
         if self.getSequence() == "idle": self.setSequence("attack")
@@ -156,30 +177,32 @@ class Player(Entity):
         currentSeq = self.getSequence()
         direction = self.getDirection()
         collisions = self.getCollisions()
-        print(collisions)
         if pressedKeys.get(pygame.K_LEFT):
             if currentSeq != "run": self.setSequence("run")
             if direction != "LEFT" : self.setDirection("LEFT")
-
+            if not collisions.get("left"):
+                self.rect.x -= self.velocity
         elif pressedKeys.get(pygame.K_RIGHT):
             if currentSeq != "run": self.setSequence("run")
             if direction != "RIGHT" : self.setDirection("RIGHT")
             if not collisions.get("right"):
-                self.pos[0] += self.velocity
+                self.rect.x += self.velocity
         elif pressedKeys.get(pygame.K_SPACE):
             if currentSeq != "jump": self.setSequence("jump")
-            if self.getSequenceCount() > 2/3*const["FPS"]:
-                pass
+            if self.getSequenceCount() > 2/3*const["FPS"] and not collisions.get("top"):
+                self.rect.y -= self.getAirVelocity()
         elif pressedKeys.get(pygame.K_DOWN):
-            self.pos[1] += self.getAirVelocity()
+            self.rect.y += self.getAirVelocity()
         elif currentSeq == "attack":
             pass
         else:
             if currentSeq != "idle": self.setSequence("idle")
 
-        self.rect = pygame.Rect(*self.getPos(), *self.getSize())
         #gravity
-        self.gravity = lerp(0.1, self.gravity, 5)
-        self.pos[1] += self.gravity
+        if collisions.get("bottom"):
+            self.gravity = 1
+        else:
+            self.gravity = lerp(0.1, self.gravity, 5)
+            self.rect.y += self.gravity
 
         self.game.updateCamPos()

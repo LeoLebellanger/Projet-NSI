@@ -42,17 +42,16 @@ class Game:
         return abs(self.camPos[0] - pos[0]) < const["SCREEN_SIZE"][0] and abs(self.camPos[1] - pos[1]) < const["SCREEN_SIZE"][1]
 
     def updateCamPos(self):
-        self.camPos[0], self.camPos[1] = self.player.pos[0] + self.player.size[0]/2 - const["SCREEN_SIZE"][0]/2, self.player.pos[1] + self.player.size[1]/2 + - const["SCREEN_SIZE"][1]/1.5# Player is in the center of the screen
+        self.camPos[0], self.camPos[1] = self.player.rect.x + self.player.rect.w/2 - const["SCREEN_SIZE"][0]/2, self.player.rect.y + self.player.rect.h/2 - const["SCREEN_SIZE"][1]/1.5# Player is in the center of the screen
 
     # Main func
     def update(self, screen):
+        screen.blit(self.backgroundImage, (0, 0))
         self.clock.tick(const["FPS"])
         for vgui in self.getVguis():
             vgui.paint(screen)
         
         if self.isInExitMenu: return
-
-        screen.blit(self.backgroundImage, (0, 0))
 
         for i in range(2):
             for j in range(2):
@@ -76,6 +75,9 @@ class Game:
         self.addVgui(startButton)
         startButton.setText("Commencer")
         startButton.setTextColor((0, 0, 0))
+        startButton.setHoveredColor((255, 0, 0))
+        startButton.setSize(100, 50)
+        startButton.setPos(400, 275)
         startButton.click = lambda : self.closeExitMenu()
     
     def closeExitMenu(self):
