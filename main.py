@@ -1,5 +1,4 @@
-# [Made by Léo Lebellanger with ♥️]
-
+# Importe le nécessaire
 import pygame
 from constants import const
 from game import Game
@@ -7,7 +6,9 @@ from game import Game
 screen = pygame.display.set_mode(const["SCREEN_SIZE"])
 game = Game()
 running = True 
+# Boucle principale
 while running:
+    # Parcour les évenements
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             exit()
@@ -24,6 +25,7 @@ while running:
         elif event.type == pygame.KEYUP:
             del game.pressedKeys[event.key] 
 
+    # Clear window
     screen.fill(const["BACKGROUND_COLOR"])
     game.update(screen)
     pygame.display.flip()

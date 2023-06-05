@@ -3,6 +3,7 @@ from constants import const
 from utils import lerp
 from math import dist
 
+# Classe parente de toutes les entités
 class Entity(pygame.sprite.Sprite):
     def __init__(self, game):
         super().__init__()
@@ -20,12 +21,14 @@ class Entity(pygame.sprite.Sprite):
         self.setAirVelocity(0) # Jump
         self.gravity = 0
 
+    # Dessine l'image du joeur sur la fenêtre
     def draw(self, screen):
         self.game.draw(screen, self.getImage(), self.getPos(), self.getSize())
 
     def update(self):
         self.rect = pygame.Rect(*self.getPos(), *self.getSize())
 
+    # Passe à la frame suivante
     def nextSequence(self):
         seqCount = self.getSequenceCount()
         if seqCount + 1 >= self.getSequenceInfos()["nSeq"]:
@@ -33,17 +36,8 @@ class Entity(pygame.sprite.Sprite):
         else:
             self.setSequenceCount(seqCount + 1)
 
-    def isCollinding(self, targetRect: pygame.Rect):
-        if abs(self.pos[0] - targetRect.right) < 3:
-            return True, "left"
-        elif abs(self.pos[0] + self.size[0] - targetRect.left) < 3:
-            return True, "right"
-        elif abs(self.pos[1] - targetRect.bottom) < 3:
-            return True, "top"
-        elif abs(self.pos[1] + self.size[1] - targetRect.top) < 3:
-            return True, "bottom"
-    
-        return False, ""
+    def isCollinding(self, targetRect: pygame.Rect) -> bool:
+        return self.rect.colliderect(targetRect)
 
     # [Accessors]
     # [Getters]
@@ -87,12 +81,12 @@ class Entity(pygame.sprite.Sprite):
     def getGravity(self):
         return self.gravity
     
-    def getActiveChunck(self):
+    def getActiveChunck(self) -> object:
         x, y = int(self.rect.x//const["SCREEN_SIZE"][0]), int(self.rect.y//const["SCREEN_SIZE"][1])
         return self.game.chuncks[f"{x}:{y}"]
 
-
-    def getCollisions(self):
+    # Obtient les collisions de l'entité
+    def getCollisions(self) -> dict:
         collisions = {}
         for tile in self.getActiveChunck().getTiles():
             if not self.rect.colliderect(tile["rect"]): continue
@@ -114,6 +108,7 @@ class Entity(pygame.sprite.Sprite):
     def setPos(self, x, y):
         self.pos = [x, y]
 
+    # Change la taille des images de l'entité
     def setSize(self, w, h):
         self.size = [w, h]
         for sequence in self.sequences:
@@ -165,6 +160,7 @@ class Player(Entity):
         self.setPos(0, 0)
         self.rect = self.getImage().get_rect()
 
+    # Dessine le joueur avec une bar de vie au dessus de sa tête
     def draw(self, screen):
         self.game.draw(screen, self.getImage(), (self.rect.x, self.rect.y), (self.rect.w, self.rect.h))
         self.game.drawRect(screen, (255, 0, 0), (self.rect.x, self.rect.y), (self.getHealth()*0.8, 5))
@@ -172,6 +168,7 @@ class Player(Entity):
     def attack(self):
         if self.getSequence() == "idle": self.setSequence("attack")
 
+    # update player pos
     def update(self):
         pressedKeys = self.game.getPressedKeys()
         currentSeq = self.getSequence()

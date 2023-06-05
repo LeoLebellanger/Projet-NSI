@@ -2,12 +2,14 @@ import pygame
 pygame.font.init()
 
 fonts = {}
-def font(name="Roboto", size=10, weight=500):
+# Créer un font
+def font(name="Roboto", size=10, weight=500) -> str:
     fontName = f"{name}:{size}:{weight}"
     if not fonts.get(fontName):
         fonts[fontName] = pygame.font.SysFont(name, size)
     return fontName
 
+# Objet vgui principal
 class Panel:
     def __init__(self):
         self.setPos(50, 50)
@@ -54,6 +56,7 @@ class Panel:
     def setHoveredColor(self, color):
         self.hoveredColor = color
 
+# Button vgui
 class Button(Panel):
     def __init__(self):
         super().__init__()

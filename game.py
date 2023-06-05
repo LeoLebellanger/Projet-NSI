@@ -8,6 +8,7 @@ import time
 import math
 ratioX, ratioY = const["SCREEN_SIZE"][0] / const["CHUNCK_SIZE"], const["SCREEN_SIZE"][1] / const["CHUNCK_SIZE"]
 
+# Objet Game
 class Game:
     def __init__(self):
         loadTileTypes()
@@ -30,17 +31,21 @@ class Game:
         self.isRunning = True
 
     def pause(self):
-        self.isRunning = False 
+        self.isRunning = False
 
+    # Dessine selon la position de la caméra elle même relative à la position du joueur
     def draw(self, screen, image, pos, size):
         screen.blit(image, (pos[0] - self.camPos[0], pos[1] - self.camPos[1], *size))
 
+    # Idem pour les rectangles
     def drawRect(self, screen, color, pos, size):
         pygame.draw.rect(screen, color, (pos[0] - self.camPos[0], pos[1] - self.camPos[1], *size))
     
+    # Vérifie si la position est dans le champ de vision de la caméra
     def isInCamView(self, pos):
         return abs(self.camPos[0] - pos[0]) < const["SCREEN_SIZE"][0] and abs(self.camPos[1] - pos[1]) < const["SCREEN_SIZE"][1]
 
+    # Met à jour la position de la caméra
     def updateCamPos(self):
         self.camPos[0], self.camPos[1] = self.player.rect.x + self.player.rect.w/2 - const["SCREEN_SIZE"][0]/2, self.player.rect.y + self.player.rect.h/2 - const["SCREEN_SIZE"][1]/1.5# Player is in the center of the screen
 
@@ -53,6 +58,7 @@ class Game:
         
         if self.isInExitMenu: return
 
+        # Dessine les chuncks
         for i in range(2):
             for j in range(2):
                 x, y = int((self.camPos[0] + const["SCREEN_SIZE"][0]*i)//const["SCREEN_SIZE"][0]), int((self.camPos[1] + const["SCREEN_SIZE"][1]*j)//const["SCREEN_SIZE"][1])
@@ -60,6 +66,7 @@ class Game:
                     self.generateNewChunck(x, y)
                 self.chuncks[f"{x}:{y}"].draw(screen)
 
+        # Update les entités
         for ent in self.getEntities():
             ent.update()
             ent.nextSequence()
@@ -67,6 +74,7 @@ class Game:
 
         if self.isRunning: pass 
 
+    # Ouvre le menu de sortie
     def openExitMenu(self):
         self.isRunning = False
         self.isInExitMenu = True 
@@ -80,6 +88,7 @@ class Game:
         startButton.setPos(400, 275)
         startButton.click = lambda : self.closeExitMenu()
     
+    # Ferme le menu de sortie
     def closeExitMenu(self):
         self.isRunning = True
         self.isInExitMenu = False 
@@ -92,13 +101,16 @@ class Game:
     def addVgui(self, vgui):
         self.vguis.append(vgui)
 
+    # Efface tous les vguis elem
     def clearVguis(self):
         self.vguis = []
 
+    # Génère un nouveau chunck
     def generateNewChunck(self, x ,y):
         chunck = Chunck(self, x, y)
         self.chuncks[f"{x}:{y}"] = chunck
 
+    # Charge les images
     def loadAssets(self, name=None):
         if not name:
             for name in os.listdir("assets"):
