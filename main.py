@@ -7,7 +7,7 @@ from game import Game
 screen = pygame.display.set_mode(const["SCREEN_SIZE"])
 game = Game()
 running = True 
-while running:
+while running: # Boucle principale
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             exit()
@@ -25,6 +25,7 @@ while running:
         elif event.type == pygame.KEYUP:
             del game.pressedKeys[event.key] 
 
+    # Clear de l'écran
     screen.fill(const["BACKGROUND_COLOR"])
     game.update(screen)
     pygame.display.flip()

@@ -8,6 +8,7 @@ import time
 import math
 ratioX, ratioY = const["SCREEN_SIZE"][0] / const["CHUNCK_SIZE"], const["SCREEN_SIZE"][1] / const["CHUNCK_SIZE"]
 
+# Objet game
 class Game:
     def __init__(self):
         loadTileTypes()
@@ -32,19 +33,23 @@ class Game:
     def pause(self):
         self.isRunning = False 
 
+    # Dessine un sprite
     def draw(self, screen, image, pos, size):
         screen.blit(image, (pos[0] - self.camPos[0], pos[1] - self.camPos[1], *size))
 
+    # Dessine un rectangle
     def drawRect(self, screen, color, pos, size):
         pygame.draw.rect(screen, color, (pos[0] - self.camPos[0], pos[1] - self.camPos[1], *size))
     
+    # Vérifie si la position est dans le champ de vision de la caméra
     def isInCamView(self, pos):
         return abs(self.camPos[0] - pos[0]) < const["SCREEN_SIZE"][0] and abs(self.camPos[1] - pos[1]) < const["SCREEN_SIZE"][1]
 
+    # Modifie la position de la caméra (relative à celle du joueur)
     def updateCamPos(self):
         self.camPos[0], self.camPos[1] = self.player.rect.x + self.player.rect.w/2 - const["SCREEN_SIZE"][0]/2, self.player.rect.y + self.player.rect.h/2 - const["SCREEN_SIZE"][1]/1.5# Player is in the center of the screen
 
-    # Main func
+    # Fonction principale
     def update(self, screen):
         if not self.player or self.player.getHealth() <= 0 and not self.isInExitMenu: 
             self.player = None
@@ -59,6 +64,7 @@ class Game:
         
         if self.isInExitMenu: return
 
+        # Dessine les chuncks
         for i in range(2):
             for j in range(2):
                 x, y = int((self.camPos[0] + const["SCREEN_SIZE"][0]*i)//const["SCREEN_SIZE"][0]), int((self.camPos[1] + const["SCREEN_SIZE"][1]*j)//const["SCREEN_SIZE"][1])

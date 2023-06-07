@@ -8,6 +8,7 @@ def font(name="Roboto", size=10, weight=500):
         fonts[fontName] = pygame.font.SysFont(name, size)
     return fontName
 
+# Element visuel de base
 class Panel:
     def __init__(self):
         self.setPos(50, 50)
@@ -54,6 +55,7 @@ class Panel:
     def setHoveredColor(self, color):
         self.hoveredColor = color
 
+# Element bouton
 class Button(Panel):
     def __init__(self):
         super().__init__()

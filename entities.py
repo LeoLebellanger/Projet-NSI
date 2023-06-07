@@ -22,11 +22,9 @@ class Entity(pygame.sprite.Sprite):
         self.rect = pygame.rect.Rect(0, 0, 1, 1)
         self.setPos(0, 0)
 
+    # Dessine l'image de l'entité
     def draw(self, screen):
         self.game.draw(screen, self.getImage(), self.getPos(), self.getSize())
-
-    def update(self):
-        self.rect = pygame.Rect(*self.getPos(), *self.getSize())
 
     def nextSequence(self):
         seqCount = self.getSequenceCount()
@@ -34,18 +32,6 @@ class Entity(pygame.sprite.Sprite):
             self.setSequenceCount(0)
         else:
             self.setSequenceCount(seqCount + 1)
-
-    def isCollinding(self, targetRect: pygame.Rect):
-        if abs(self.pos[0] - targetRect.right) < 3:
-            return True, "left"
-        elif abs(self.pos[0] + self.size[0] - targetRect.left) < 3:
-            return True, "right"
-        elif abs(self.pos[1] - targetRect.bottom) < 3:
-            return True, "top"
-        elif abs(self.pos[1] + self.size[1] - targetRect.top) < 3:
-            return True, "bottom"
-    
-        return False, ""
 
     def damage(self, amount):
         self.health -= amount
@@ -104,6 +90,7 @@ class Entity(pygame.sprite.Sprite):
     def getAttackPower(self):
         return self.attackPower
 
+    # Obtient les collisions de l'entité
     def getCollisions(self):
         collisions = {}
         chunck = self.getActiveChunck()
@@ -181,6 +168,7 @@ class Entity(pygame.sprite.Sprite):
     def setAttackPowerPower(self, amount):
         self.attackPower = amount
 
+# Objet joueur
 class Player(Entity):
     def __init__(self, game):
         super().__init__(game)
