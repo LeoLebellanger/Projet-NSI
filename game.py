@@ -8,6 +8,7 @@ import time
 import math
 ratioX, ratioY = const["SCREEN_SIZE"][0] / const["CHUNCK_SIZE"], const["SCREEN_SIZE"][1] / const["CHUNCK_SIZE"]
 
+# Objet game
 class Game:
     def __init__(self):
         loadTileTypes()
@@ -18,13 +19,13 @@ class Game:
         self.assests = {}
         self.chuncks = {}
         self.loadAssets("player")
+        self.loadAssets("mummy", True)
         self.openExitMenu()
-        self.player = Player(self)
-        self.addEntitie(self.player)
         self.clock = pygame.time.Clock()
         self.pressedKeys = {}
         self.camPos = [0, 0]
         self.backgroundImage = pygame.transform.scale(pygame.image.load("assets/background/background.png").convert_alpha(), const["SCREEN_SIZE"])
+        self.player = None
 
     def resume(self):
         self.isRunning = True
@@ -32,28 +33,38 @@ class Game:
     def pause(self):
         self.isRunning = False 
 
+    # Dessine un sprite
     def draw(self, screen, image, pos, size):
         screen.blit(image, (pos[0] - self.camPos[0], pos[1] - self.camPos[1], *size))
 
+    # Dessine un rectangle
     def drawRect(self, screen, color, pos, size):
         pygame.draw.rect(screen, color, (pos[0] - self.camPos[0], pos[1] - self.camPos[1], *size))
     
+    # Vérifie si la position est dans le champ de vision de la caméra
     def isInCamView(self, pos):
         return abs(self.camPos[0] - pos[0]) < const["SCREEN_SIZE"][0] and abs(self.camPos[1] - pos[1]) < const["SCREEN_SIZE"][1]
 
+    # Modifie la position de la caméra (relative à celle du joueur)
     def updateCamPos(self):
-        self.camPos[0], self.camPos[1] = self.player.pos[0] + self.player.size[0]/2 - const["SCREEN_SIZE"][0]/2, self.player.pos[1] + self.player.size[1]/2 + - const["SCREEN_SIZE"][1]/1.5# Player is in the center of the screen
+        self.camPos[0], self.camPos[1] = self.player.rect.x + self.player.rect.w/2 - const["SCREEN_SIZE"][0]/2, self.player.rect.y + self.player.rect.h/2 - const["SCREEN_SIZE"][1]/1.5# Player is in the center of the screen
 
-    # Main func
+    # Fonction principale
     def update(self, screen):
+        if not self.player or self.player.getHealth() <= 0 and not self.isInExitMenu: 
+            self.player = None
+            self.clearVguis()
+            self.clearEntities()
+            self.clearChuncks()
+            self.openExitMenu()
+        screen.blit(self.backgroundImage, (0, 0))
         self.clock.tick(const["FPS"])
         for vgui in self.getVguis():
             vgui.paint(screen)
         
         if self.isInExitMenu: return
 
-        screen.blit(self.backgroundImage, (0, 0))
-
+        # Dessine les chuncks
         for i in range(2):
             for j in range(2):
                 x, y = int((self.camPos[0] + const["SCREEN_SIZE"][0]*i)//const["SCREEN_SIZE"][0]), int((self.camPos[1] + const["SCREEN_SIZE"][1]*j)//const["SCREEN_SIZE"][1])
@@ -61,7 +72,11 @@ class Game:
                     self.generateNewChunck(x, y)
                 self.chuncks[f"{x}:{y}"].draw(screen)
 
+        xp = self.player.xp
+        pygame.draw.rect(screen, (0, 220, 0), (const["SCREEN_SIZE"][0]/2-xp/2, 10, xp, 10))
+
         for ent in self.getEntities():
+            if not self.isInCamView(ent.getPos()): continue
             ent.update()
             ent.nextSequence()
             ent.draw(screen)
@@ -76,13 +91,22 @@ class Game:
         self.addVgui(startButton)
         startButton.setText("Commencer")
         startButton.setTextColor((0, 0, 0))
-        startButton.click = lambda : self.closeExitMenu()
+        startButton.setHoveredColor((255, 0, 0))
+        startButton.setSize(100, 50)
+        startButton.setPos(400, 275)
+        startButton.click = lambda : self.spawnPlayer() or self.closeExitMenu()
     
     def closeExitMenu(self):
         self.isRunning = True
         self.isInExitMenu = False 
 
         self.clearVguis()
+
+    def spawnPlayer(self):
+        self.player = Player(self)
+        self.player.setPos(0, 0)
+        self.addEntitie(self.player)
+        self.updateCamPos()
 
     def addEntitie(self, ent):
         self.entities.append(ent)
@@ -93,11 +117,17 @@ class Game:
     def clearVguis(self):
         self.vguis = []
 
+    def clearEntities(self):
+        self.entities = []
+
+    def clearChuncks(self):
+        self.chuncks = {}
+
     def generateNewChunck(self, x ,y):
         chunck = Chunck(self, x, y)
         self.chuncks[f"{x}:{y}"] = chunck
 
-    def loadAssets(self, name=None):
+    def loadAssets(self, name=None, revert=False):
         if not name:
             for name in os.listdir("assets"):
                 self.loadAssets(name)
@@ -114,8 +144,18 @@ class Game:
             ratio = math.floor(const["FPS"] / len(dirs))
             for fileName in dirs:
                 image = pygame.image.load(f"assets/{name}/{assetsType}/{fileName}").convert_alpha()
-                assets[name][assetsType]["RIGHT"] += [image] * ratio
-                assets[name][assetsType]["LEFT"] += [pygame.transform.flip(image, True, False)] * ratio
+
+                if revert:
+                    assets[name][assetsType]["RIGHT"] += [pygame.transform.flip(image, True, False)] * ratio
+                    assets[name][assetsType]["LEFT"] += [image] * ratio
+                else:
+                    assets[name][assetsType]["RIGHT"] += [image] * ratio
+                    assets[name][assetsType]["LEFT"] += [pygame.transform.flip(image, True, False)] * ratio
+            
+    def spawnMummy(self, x, y):
+        mummy = Mummy(self)
+        mummy.setPos(x, y)
+        self.addEntitie(mummy)
 
     # [Accessors]
     # [Getters]
